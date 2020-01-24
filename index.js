@@ -21,6 +21,7 @@ program
     .option('--use-hashes', 'Use hashes instead of tags to check for updates')
     .option('--all-branches', 'Check for tags in all branches')
     .option('--suppress-script-link', 'Suppress "PR Created By" message in PRs')
+    .option('--has-fork <forkurl>', 'Url to a PREMADE fork of the repository. For use with bot accounts. (Ignored unless --pull-request is also provided)')
     .option('--pull-request', 'Make a pull request with the change. The username/reponame will be determined from the clone URL. (Only for GitHub repos)')
     .option('--pull-request-notify <user>', 'User to CC in change PRs. Ignored unless --pull-request is also provided. (Example: @gary-kim)')
     .action(update);
@@ -69,7 +70,10 @@ function update(repoUrl, cmd) {
     console.log(`Making a commit to update to ${toUpdateTo}`);
     fs.writeFileSync(versionFile, toUpdateTo);
 
-    execSync(`git commit -am "auto: Update to ${toUpdateTo}"`, {cwd: repo});
+    execSync(`git commit -am "Update to ${toUpdateTo}"`, {cwd: repo});
+    if (cmd.pullRequest && cmd.hasFork) {
+        execSync(`git remote set-url origin ${cmd.hasFork}`, {cwd: repo});
+    }
     execSync(`git push origin ${newBranch}`, {cwd: repo});
 
     if (cmd.pullRequest) {
@@ -82,10 +86,17 @@ function update(repoUrl, cmd) {
         const repoUser = cloneUrlParts[cloneUrlParts.length - 2];
         const repoName = cloneUrlParts[cloneUrlParts.length - 1];
 
+        let headUser = repoUser;
+
+        if (cmd.hasFork) {
+            cloneUrlParts = cmd.hasFork.replace(/.git$/, "").split("/");
+            headUser = cloneUrlParts[cloneUrlParts.length - 2]
+        }
+
         let ghRepo = gh.getRepo(repoUser, repoName);
         let prOptions = {
             title: `Update version to ${toUpdateTo}`,
-            head: newBranch,
+            head: `${headUser}:${newBranch}`,
             base: `master`,
             body: `Update version to ${toUpdateTo}`,
             maintainer_can_modify: true
