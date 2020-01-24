@@ -56,11 +56,16 @@ function update(repoUrl, cmd) {
         return;
     }
 
+    if (cmd.pullRequest && cmd.hasFork) {
+        execSync(`git remote set-url origin ${cmd.hasFork}`, {cwd: repo});
+        execSync('git fetch origin', {cwd: repo});
+    }
+
     // Make new commit
     let newBranch = "master";
     if (cmd.pullRequest) {
         newBranch = `bot/auto-update/${currentVersion}-${toUpdateTo}`;
-        if (execSync(`git branch --list ${newBranch}`, {cwd: repo}).includes(newBranch)) {
+        if (execSync(`git branch --list -a origin/${newBranch}`, {cwd: repo}).includes(newBranch)) {
             console.log(`Found an already existing branch with this update, exiting`);
             return;
         }
@@ -71,9 +76,6 @@ function update(repoUrl, cmd) {
     fs.writeFileSync(versionFile, toUpdateTo);
 
     execSync(`git commit -am "Update to ${toUpdateTo}"`, {cwd: repo});
-    if (cmd.pullRequest && cmd.hasFork) {
-        execSync(`git remote set-url origin ${cmd.hasFork}`, {cwd: repo});
-    }
     execSync(`git push origin ${newBranch}`, {cwd: repo});
 
     if (cmd.pullRequest) {
