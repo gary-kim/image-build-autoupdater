@@ -19,6 +19,7 @@ program
     .option('--config-file <path>', 'file to look in for config', 'ibau_config.json')
     .option('--upstream-repo-url <url>', 'Url of upstream repo')
     .option('--use-hashes', 'Use hashes instead of tags to check for updates')
+    .option('--all-branches', 'Check for tags in all branches')
     .option('--pull-request', 'Make a pull request with the change. The username/reponame will be determined from the clone URL. (Only for GitHub repos)')
     .option('--pull-request-notify <user>', 'User to CC in change PRs. Ignored unless --pull-request is also provided. (Example: @gary-kim)')
     .action(update);
@@ -40,10 +41,11 @@ function update(repoUrl, cmd) {
     cmd.pullRequestNotify = setIfNotUndefined(cmd.pullRequestNotify, repoConfig.pullRequestNotify);
     cmd.upstreamRepoUrl = setIfNotUndefined(cmd.upstreamRepoUrl, repoConfig.upstreamRepoUrl);
     cmd.useHashes = setIfNotUndefined(cmd.useHashes, repoConfig.useHashes);
+    cmd.allBranches = setIfNotUndefined(cmd.allBranches, repoConfig.allBranches);
 
     // Get the latest version from the upstream repo and the current version from the build repo
     let currentVersion = fs.readFileSync(versionFile).toString().trim();
-    let toUpdateTo = latestVersion(cmd.upstreamRepoUrl, cmd.useHashes);
+    let toUpdateTo = latestVersion(cmd.upstreamRepoUrl, cmd.allBranches? "allBranches" : (cmd.useHashes? "hash" : ""));
     console.log(`Found ${currentVersion} in build repo and ${toUpdateTo} in upstream repo`);
 
     if (currentVersion === toUpdateTo) {
@@ -108,15 +110,24 @@ function getRepo(repoUrl) {
 /**
  * Get the latest tag or hash from a given repo
  * @param {string} repoUrl
- * @param  {boolean} [hash]
+ * @param {string} [option] Can be "allBranches" or "hash"
  * @returns {string}
  */
-function latestVersion(repoUrl, hash) {
+function latestVersion(repoUrl, option) {
     let dir = getRepo(repoUrl);
-    if (hash) {
-        return execSync(`git rev-parse HEAD`, {cwd: dir}).toString().trim();
+    let tr = "";
+    switch (option) {
+        case "allBranches":
+            tr = execSync(`git describe --tags $(git rev-list --tags --max-count=1)`, {cwd: dir});
+            break;
+        case "hash":
+            tr = execSync(`git rev-parse HEAD`, {cwd: dir});
+            break;
+        default:
+            tr = execSync(`git describe --tags --abbrev=0`, {cwd: dir});
+            break;
     }
-    return execSync(`git describe --tags --abbrev=0`, {cwd: dir}).toString().trim();
+    return tr.toString().trim();
 }
 
 /**
