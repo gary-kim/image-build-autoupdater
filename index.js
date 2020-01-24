@@ -17,6 +17,7 @@ program
     .description('update the repo at this address')
     .option('--version-file <path>', 'file to look in for current version', 'VERSION')
     .option('--config-file <path>', 'file to look in for config', 'ibau_config.json')
+    .option('--upstream-repo-url <url>', 'Url of upstream repo')
     .option('--pull-request', 'Make a pull request with the change. The username/reponame will be determined from the clone URL. (Only for GitHub repos)')
     .option('--pull-request-notify <user>', 'User to CC in change PRs. Ignored unless --pull-request is also provided. (Example: @gary-kim)')
     .action(update);
@@ -26,16 +27,29 @@ program.parse(process.argv);
 var repoCounter = 0;
 
 function update(repoUrl, cmd) {
+    // Get build repo
     let repo = getRepo(repoUrl);
+
+    // Get config from build repo
     const versionFile = path.join(repo, cmd.versionFile);
-    let repoConfig = JSON.parse(fs.readFileSync(path.join(repo, cmd.configFile)));
+    let repoConfig = JSON.parse(fs.readFileSync(path.join(repo, cmd.configFile)))
+
+    // Fill in config from repo
+    cmd.pullRequest = setIfNotUndefined(cmd.pullRequest, repoConfig.pullRequest);
+    cmd.pullRequestNotify = setIfNotUndefined(cmd.pullRequestNotify, repoConfig.pullRequestNotify);
+    cmd.upstreamRepoUrl = setIfNotUndefined(cmd.upstreamRepoUrl, repoConfig.upstreamRepoUrl);
+
+    // Get the latest version from the upstream repo and the current version from the build repo
     let currentVersion = fs.readFileSync(versionFile).toString().trim();
-    let toUpdateTo = latestVersion(repoConfig.upstreamRepoUrl);
+    let toUpdateTo = latestVersion(cmd.upstreamRepoUrl);
     console.log(`Found ${currentVersion} in build repo and ${toUpdateTo} in upstream repo`);
+
     if (currentVersion === toUpdateTo) {
         console.log(`No update required, exiting`);
         return;
     }
+
+    // Make new commit
     let newBranch = "master";
     if (cmd.pullRequest) {
         newBranch = `bot/auto-update/${currentVersion}-${toUpdateTo}`;
@@ -45,18 +59,23 @@ function update(repoUrl, cmd) {
         }
         execSync(`git checkout -b ${newBranch}`, {cwd: repo});
     }
+
     console.log(`Making a commit to update to ${toUpdateTo}`);
     fs.writeFileSync(versionFile, toUpdateTo);
+
     execSync(`git commit -am "auto: Update to ${toUpdateTo}"`, {cwd: repo});
     execSync(`git push origin ${newBranch}`, {cwd: repo});
+
     if (cmd.pullRequest) {
         let gh = new GitHub({
             username: process.env.GIT_USERNAME,
             password: process.env.GIT_PASSWORD
         });
+
         let cloneUrlParts = repoUrl.replace(/.git$/, "").split("/");
         const repoUser = cloneUrlParts[cloneUrlParts.length - 2];
         const repoName = cloneUrlParts[cloneUrlParts.length - 1];
+
         let ghRepo = gh.getRepo(repoUser, repoName);
         let prOptions = {
             title: `Update version to ${toUpdateTo}`,
@@ -72,6 +91,11 @@ function update(repoUrl, cmd) {
     }
 }
 
+/**
+ * Clone a repo into a temporary folder
+ * @param repoUrl
+ * @returns {string} path to temporary folder with cloned repo
+ */
 function getRepo(repoUrl) {
     let dir = temp.mkdirSync(repoCounter++);
     execSync(`git -c "credential.helper=/bin/bash ${path.join(__dirname, "gitcredentials.sh")}" clone --recursive ${repoUrl} ./`, {cwd: dir});
@@ -79,7 +103,26 @@ function getRepo(repoUrl) {
     return dir;
 }
 
+/**
+ * Get the latest tag from a given repo
+ * @param repoUrl
+ * @returns {string}
+ */
 function latestVersion(repoUrl) {
     let dir = getRepo(repoUrl);
     return execSync(`git describe --tags --abbrev=0`, {cwd: dir}).toString().trim();
+}
+
+/**
+ * Returns the first argument that is not undefined
+ * @param given
+ * @returns {*|undefined}
+ */
+function setIfNotUndefined(...given) {
+    for (let i = 0; i < given.length; i++) {
+        if (typeof given[i] !== "undefined") {
+            return given[i];
+        }
+    }
+    return undefined;
 }
