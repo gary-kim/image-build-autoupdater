@@ -15,7 +15,9 @@ steps:
         from_secret: docker_password
       repo: garykim/image-build-autoupdater
       username: garykim
-      tags: edge
+      tags:
+        - edge
+        - latest
     when:
       branch:
         - master
