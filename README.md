@@ -12,7 +12,9 @@ In the repo, create a file called `ibau_config.json` and put in the following co
   "upstreamRepoUrl": "<url of upstream repo>",
   "pullRequest": true,
   "pullRequestNotify": "@gary-kim",
-  "useHashes": false
+  "useHashes": false,
+  "allBranches": false,
+  "suppressScriptLink": false
 }
 ```
 

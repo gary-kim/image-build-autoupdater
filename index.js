@@ -20,6 +20,7 @@ program
     .option('--upstream-repo-url <url>', 'Url of upstream repo')
     .option('--use-hashes', 'Use hashes instead of tags to check for updates')
     .option('--all-branches', 'Check for tags in all branches')
+    .option('--suppress-script-link', 'Suppress "PR Created By" message in PRs')
     .option('--pull-request', 'Make a pull request with the change. The username/reponame will be determined from the clone URL. (Only for GitHub repos)')
     .option('--pull-request-notify <user>', 'User to CC in change PRs. Ignored unless --pull-request is also provided. (Example: @gary-kim)')
     .action(update);
@@ -42,6 +43,7 @@ function update(repoUrl, cmd) {
     cmd.upstreamRepoUrl = setIfNotUndefined(cmd.upstreamRepoUrl, repoConfig.upstreamRepoUrl);
     cmd.useHashes = setIfNotUndefined(cmd.useHashes, repoConfig.useHashes);
     cmd.allBranches = setIfNotUndefined(cmd.allBranches, repoConfig.allBranches);
+    cmd.suppressScriptLink = setIfNotUndefined(cmd.suppressScriptLink, repoConfig.suppressScriptLink);
 
     // Get the latest version from the upstream repo and the current version from the build repo
     let currentVersion = fs.readFileSync(versionFile).toString().trim();
@@ -90,6 +92,9 @@ function update(repoUrl, cmd) {
         };
         if (cmd.pullRequestNotify) {
             prOptions.body += '\n\nCC ' + cmd.pullRequestNotify;
+        }
+        if (!cmd.suppressScriptLink) {
+            prOptions.body += `PR created by [${packagejson.name}](${packagejson.homepage})`;
         }
         ghRepo.createPullRequest(prOptions);
     }
