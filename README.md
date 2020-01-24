@@ -9,7 +9,10 @@ Set up a repo to use CI to build and release images. Set it up in such a way tha
 In the repo, create a file called `ibau_config.json` and put in the following contents:
 ```json
 {
-  "upstreamRepoUrl": "<url of upstream repo>"
+  "upstreamRepoUrl": "<url of upstream repo>",
+  "pullRequest": true,
+  "pullRequestNotify": "@gary-kim",
+  "useHashes": false
 }
 ```
 
