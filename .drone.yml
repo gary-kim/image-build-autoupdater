@@ -1,4 +1,5 @@
 kind: pipeline
+type: docker
 name: build
 
 steps:
@@ -6,7 +7,7 @@ steps:
     image: node:12
     commands:
       - (npm ci --only=production)
-  - name: deploy
+  - name: deploy-edge
     image: plugins/docker
     settings:
       context: .
@@ -14,11 +15,27 @@ steps:
         from_secret: docker_password
       repo: garykim/image-build-autoupdater
       username: garykim
-      tags: latest
+      tags: edge
     when:
       branch:
         - master
       event:
         - push
+      repo:
+        - gary-kim/image-build-autoupdater
+  - name: deploy-build
+    image: plugins/docker
+    settings:
+      context: .
+      password:
+        from_secret: docker_password
+      repo: garykim/image-build-autoupdater
+      username: garykim
+      auto_tag: true
+    when:
+      branch:
+        - master
+      event:
+        - tag
       repo:
         - gary-kim/image-build-autoupdater
