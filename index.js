@@ -136,7 +136,7 @@ function latestVersion(repoUrl, option) {
     let randdir = temp.mkdirSync(repoCounter++);
     switch (option) {
         case "allBranches":
-            tr = execSync(`git ls-remote --tags --refs ${repoUrl} | tail -n1`, {cwd: randdir}).toString().trim();
+            tr = execSync(`git ls-remote --tags --refs --sort "v:refname" ${repoUrl} | tail -n1`, {cwd: randdir}).toString().trim();
             tr = tr.substring(tr.lastIndexOf("refs/tags/") + "refs/tags/".length);
             break;
         case "hash":
