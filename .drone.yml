@@ -7,6 +7,7 @@ steps:
     image: node:12
     commands:
       - (npm ci --only=production)
+      - (echo edge,latest > .tags)
   - name: deploy-edge
     image: plugins/docker
     settings:
@@ -15,9 +16,6 @@ steps:
         from_secret: docker_password
       repo: garykim/image-build-autoupdater
       username: garykim
-      tags:
-        - edge
-        - latest
     when:
       branch:
         - master
@@ -35,8 +33,6 @@ steps:
       username: garykim
       auto_tag: true
     when:
-      branch:
-        - master
       event:
         - tag
       repo:
