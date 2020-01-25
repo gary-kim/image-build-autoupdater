@@ -132,8 +132,12 @@ function getRepo(repoUrl) {
  * @returns {string}
  */
 function latestVersion(repoUrl, option) {
-    let dir = getRepo(repoUrl);
     let tr = "";
+    if (option === "allBranches") {
+        tr = execSync(`git ls-remote --tags --refs ${repoUrl} | tail -n1`, {cwd: temp.mkdirSync(repoCounter++)}).toString().trim();
+        return tr.substring(tr.lastIndexOf("refs/tags/") + "refs/tags/".length);
+    }
+    let dir = getRepo(repoUrl);
     switch (option) {
         case "allBranches":
             tr = execSync(`git describe --tags $(git rev-list --tags --max-count=1)`, {cwd: dir});
