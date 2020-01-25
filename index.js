@@ -133,22 +133,23 @@ function getRepo(repoUrl) {
  */
 function latestVersion(repoUrl, option) {
     let tr = "";
-    if (option === "allBranches") {
-        tr = execSync(`git ls-remote --tags --refs ${repoUrl} | tail -n1`, {cwd: temp.mkdirSync(repoCounter++)}).toString().trim();
-        return tr.substring(tr.lastIndexOf("refs/tags/") + "refs/tags/".length);
-    }
-    let dir = getRepo(repoUrl);
+    let randdir = temp.mkdirSync(repoCounter++);
     switch (option) {
         case "allBranches":
-            tr = execSync(`git describe --tags $(git rev-list --tags --max-count=1)`, {cwd: dir});
+            tr = execSync(`git ls-remote --tags --refs ${repoUrl} | tail -n1`, {cwd: randdir}).toString().trim();
+            tr = tr.substring(tr.lastIndexOf("refs/tags/") + "refs/tags/".length);
             break;
         case "hash":
-            tr = execSync(`git rev-parse HEAD`, {cwd: dir});
-            break;
-        default:
-            tr = execSync(`git describe --tags --abbrev=0`, {cwd: dir});
+            tr = execSync(`git ls-remote ${repoUrl} HEAD`, {cwd: randdir}).toString().trim();
+            tr = tr.split("\t")[0];
             break;
     }
+    if (tr !== "") {
+        return tr.toString().trim();
+    }
+
+    let dir = getRepo(repoUrl);
+    tr = execSync(`git describe --tags --abbrev=0`, {cwd: dir});
     return tr.toString().trim();
 }
 
