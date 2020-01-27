@@ -107,7 +107,7 @@ function update(repoUrl, cmd) {
             prOptions.body += '\n\nCC ' + cmd.pullRequestNotify;
         }
         if (!cmd.suppressScriptLink) {
-            prOptions.body += `PR created by [${packagejson.name}](${packagejson.homepage})`;
+            prOptions.body += `\n\nPR created by [${packagejson.name}](${packagejson.homepage})`;
         }
         ghRepo.createPullRequest(prOptions);
     }
