@@ -14,7 +14,8 @@ In the repo, create a file called `ibau_config.json` and put in the following co
   "pullRequestNotify": "@gary-kim",
   "useHashes": false,
   "allBranches": false,
-  "suppressScriptLink": false
+  "suppressScriptLink": false,
+  "commitMessageBody": "Signed-off-by: Gary Kim Bot <bot@garykim.dev>"
 }
 ```
 

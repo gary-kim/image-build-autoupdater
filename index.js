@@ -24,6 +24,7 @@ program
     .option('--has-fork <forkurl>', 'Url to a PREMADE fork of the repository. For use with bot accounts. (Ignored unless --pull-request is also provided)')
     .option('--pull-request', 'Make a pull request with the change. The username/reponame will be determined from the clone URL. (Only for GitHub repos)')
     .option('--pull-request-notify <user>', 'User to CC in change PRs. Ignored unless --pull-request is also provided. (Example: @gary-kim)')
+    .option('--commit-message-body <msg>', 'Commit message body, (Example: Signed-off-by:')
     .action(update);
 
 program.parse(process.argv);
@@ -45,6 +46,7 @@ function update(repoUrl, cmd) {
     cmd.useHashes = setIfNotUndefined(cmd.useHashes, repoConfig.useHashes);
     cmd.allBranches = setIfNotUndefined(cmd.allBranches, repoConfig.allBranches);
     cmd.suppressScriptLink = setIfNotUndefined(cmd.suppressScriptLink, repoConfig.suppressScriptLink);
+    cmd.commitMessageBody = setIfNotUndefined(cmd.commitMessageBody, repoConfig.commitMessageBody);
 
     // Get the latest version from the upstream repo and the current version from the build repo
     let currentVersion = fs.readFileSync(versionFile).toString().trim();
@@ -75,7 +77,9 @@ function update(repoUrl, cmd) {
     console.log(`Making a commit to update to ${toUpdateTo}`);
     fs.writeFileSync(versionFile, toUpdateTo);
 
-    execSync(`git commit -am "Update to ${toUpdateTo}"`, {cwd: repo});
+    const commitMessage = toUpdateTo + "\n\n" + cmd.commitMessageBody.replace(/\\n/g, "\n");
+
+    execSync(`git commit -aF -"`, {cwd: repo, input: commitMessage});
     execSync(`git push origin ${newBranch}`, {cwd: repo});
 
     if (cmd.pullRequest) {
