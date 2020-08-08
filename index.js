@@ -77,7 +77,7 @@ function update(repoUrl, cmd) {
     console.log(`Making a commit to update to ${toUpdateTo}`);
     fs.writeFileSync(versionFile, toUpdateTo);
 
-    const commitMessage = toUpdateTo + "\n\n" + cmd.commitMessageBody.replace(/\\n/g, "\n");
+    const commitMessage = "Update to " + toUpdateTo + "\n\n" + cmd.commitMessageBody.replace(/\\n/g, "\n");
 
     execSync(`git commit -aF -`, {cwd: repo, input: commitMessage});
     execSync(`git push origin ${newBranch}`, {cwd: repo});
