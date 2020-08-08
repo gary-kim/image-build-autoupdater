@@ -1,6 +1,6 @@
 {
   "name": "image-build-autoupdater",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "automatically update version numbers in build repositories for container images",
   "main": "index.js",
   "scripts": {
