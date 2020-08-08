@@ -79,7 +79,7 @@ function update(repoUrl, cmd) {
 
     const commitMessage = toUpdateTo + "\n\n" + cmd.commitMessageBody.replace(/\\n/g, "\n");
 
-    execSync(`git commit -aF -"`, {cwd: repo, input: commitMessage});
+    execSync(`git commit -aF -`, {cwd: repo, input: commitMessage});
     execSync(`git push origin ${newBranch}`, {cwd: repo});
 
     if (cmd.pullRequest) {
