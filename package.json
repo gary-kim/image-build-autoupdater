@@ -19,7 +19,7 @@
   "homepage": "https://github.com/gary-kim/image-build-autoupdater#readme",
   "dependencies": {
     "commander": "^4.1.0",
-    "github-api": "^3.3.0",
+    "github-api": "^3.4.0",
     "temp": "^0.9.1"
   }
 }
